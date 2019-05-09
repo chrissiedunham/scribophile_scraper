@@ -15,17 +15,22 @@ class Scraper
   end
 
   def self.get_spotlight_posts(kind)
+    scraper = new
     if kind == "group"
-      new._group_spotlight_posts
+
+      puts "in group******"
+      scraper._group_spotlight_posts
+      scraper._show_spotlights
     else
-      new._main_spotlight_posts
+      scraper._main_spotlight_posts
+      scraper._show_spotlights
     end
   end
 
   def _group_spotlight_posts
     GROUPS.each do |group|
       url = "#{BASE_URL}/groups/#{group}/"
-      _get_spotlights(url, group=true)
+      _get_spotlights(url, group)
     end
   end
 
@@ -34,11 +39,11 @@ class Scraper
     _get_spotlights(url)
   end
 
-  def _get_spotlights(url, group=false)
+  def _get_spotlights(url, group=nil)
     document = _parse_page(url)
 
     recent_posts = document.css('table.work-list').css('tr')
-    puts ""
+    puts "Found #{recent_posts.count} in group #{group}" if group
 
     recent_posts.each do |post|
       if post.css('.work-spotlight-status spotlight')
@@ -59,31 +64,36 @@ class Scraper
             @short_posts[url] = {
               :word_count => word_count,
               :title => title,
+              :group => group,
             }
           end
         end
       end
     end
+  end
 
+  def _show_spotlights
     puts "STANDALONE POSTS"
-    short_posts.each do |url, post|
+    @short_posts.each do |url, post|
+      puts "#{post[:word_count]}: #{post[:title]}"
+      puts "url: #{BASE_URL}/#{url['href']}"
+      puts "group: #{post[:group]}"
+      puts ""
+    end
+
+    puts "*"*10
+    puts "CHAPTER POSTS"
+    chapter_posts.each do |url, post|
       puts "#{post[:word_count]}: #{post[:title]}"
       puts "url: #{BASE_URL}/#{url['href']}"
       puts ""
     end
-    # puts "*"*10
-    # puts "CHAPTER POSTS"
-    # chapter_posts.each do |url, post|
-    #   puts "#{post[:word_count]}: #{post[:title]}"
-    #   puts "url: #{BASE_URL}/#{url['href']}"
-    #   puts ""
-    # end
   end
 
   def _parse_page(url)
     page = open(url, "Cookie" => COOKIE)
 
-    document = Nokogiri::HTML(page)
+    Nokogiri::HTML(page)
   end
 end
 
