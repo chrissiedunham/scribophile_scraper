@@ -17,8 +17,6 @@ class Scraper
   def self.get_spotlight_posts(kind)
     scraper = new
     if kind == "group"
-
-      puts "in group******"
       scraper._group_spotlight_posts
       scraper._show_spotlights
     else
@@ -35,20 +33,19 @@ class Scraper
   end
 
   def _main_spotlight_posts
-    url = "https://www.scribophile.com/writing/"
+    url = "#{BASE_URL}/writing/"
     _get_spotlights(url)
   end
 
   def _get_spotlights(url, group=nil)
     document = _parse_page(url)
-
     recent_posts = document.css('table.work-list').css('tr')
-    puts "Found #{recent_posts.count} in group #{group}" if group
 
     recent_posts.each do |post|
-      if post.css('.work-spotlight-status spotlight')
+      unless post.css('.spotlight').empty?
         title = post.css('.work-details').css('p').text
-        url = post.css('.work-details').css('a')[0]
+
+        post_url = post.css('.work-details').css('a')[0]
         word_text = group ? post.css('.text').text.split("•")[1] : post.css('.words').text
         word_count = word_text.gsub(/\D/, '')
 
@@ -56,12 +53,12 @@ class Scraper
 
         if word_count.to_i < 2000
           if chapter
-            @chapter_posts[url] = {
+            @chapter_posts[post_url] = {
               :word_count => word_count,
               :title => title,
             }
           else
-            @short_posts[url] = {
+            @short_posts[post_url] = {
               :word_count => word_count,
               :title => title,
               :group => group,
