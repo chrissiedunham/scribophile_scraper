@@ -7,50 +7,66 @@ GROUPS = ['poetic-prose', 'lit-up-the-land-of-little-tales', 'spirit-walking', '
 BASE_URL = "https://www.scribophile.com"
 
 class Scraper
-  def self.get_group_posts
-    GROUPS.each do |group|
-      url = "#{BASE_URL}/groups/#{group}/"
-      document = _parse_page(url)
-      _get_spotlight_posts(document)
+  def self.get_spotlight_posts(kind)
+    if kind == "group"
+      GROUPS.each do |group|
+        url = "#{BASE_URL}/groups/#{group}/"
+        _get_main_spotlight(url)
+      end
+    else
+      url = "https://www.scribophile.com/writing/"
+      _get_main_spotlight(url)
     end
   end
 
-  def self.get_main_spotlight
-    url = "https://www.scribophile.com/writing/"
+  def self.get_group_posts
+  end
+
+  def self._get_main_spotlight(url)
     document = _parse_page(url)
 
     recent_posts = document.css('table.work-list').css('tr')
+    puts ""
 
+    short_posts = {}
+    chapter_posts = {}
     recent_posts.each do |post|
       if post.css('.work-spotlight-status spotlight')
-        link = post.css('a')[1]
         title = post.css('.work-details').css('p').text
-        url = post.css('.work-details').css('a')[1]
+        url = post.css('.work-details').css('a')[0]
         word_text = post.css('.words').text
         word_count = word_text.gsub(/\D/, '')
+        chapter = /chapter/.match?(title.downcase)
+
         if word_count.to_i < 2000
-          puts "#{word_count}: #{title}"
-          puts "url: #{BASE_URL}/#{url['href']}"
-          puts ""
+          if chapter
+            chapter_posts[url] = {
+              :word_count => word_count,
+              :title => title,
+            }
+          else
+            short_posts[url] = {
+              :word_count => word_count,
+              :title => title,
+            }
+          end
         end
       end
     end
-  end
 
-  def self._get_spotlight_posts(document)
-    recent_posts = document.css('#work').css('table.work-list').css('tr')
-
-    recent_posts.each do |post|
-      if post.css('.work-spotlight-status spotlight')
-        link = post.css('a')[1]
-        word_text = post.css('.text').css('div')[0].text
-        word_count = word_text.gsub(',', '').scan(/\d+/)[1]
-        if word_count.to_i < 2000
-          puts "#{word_count}: #{BASE_URL}#{link['href']}"
-          puts ""
-        end
-      end
+    puts "STANDALONE POSTS"
+    short_posts.each do |url, post|
+      puts "#{post[:word_count]}: #{post[:title]}"
+      puts "url: #{BASE_URL}/#{url['href']}"
+      puts ""
     end
+    # puts "*"*10
+    # puts "CHAPTER POSTS"
+    # chapter_posts.each do |url, post|
+    #   puts "#{post[:word_count]}: #{post[:title]}"
+    #   puts "url: #{BASE_URL}/#{url['href']}"
+    #   puts ""
+    # end
   end
 
   def self._parse_page(url)
@@ -60,4 +76,6 @@ class Scraper
   end
 end
 
-Scraper.get_main_spotlight
+post_kind = ARGV[0]
+
+Scraper.get_spotlight_posts(post_kind)
