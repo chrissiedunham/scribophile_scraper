@@ -29,7 +29,9 @@ class Scraper
         word_text = post.css('.words').text
         word_count = word_text.gsub(/\D/, '')
         if word_count.to_i < 2000
-          puts "#{word_count}: #{title}, url: #{BASE_URL}/#{url['href']}"
+          puts "#{word_count}: #{title}"
+          puts "url: #{BASE_URL}/#{url['href']}"
+          puts ""
         end
       end
     end
