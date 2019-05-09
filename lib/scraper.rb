@@ -11,17 +11,41 @@ class Scraper
     GROUPS.each do |group|
       url = "#{BASE_URL}/groups/#{group}/"
       document = _parse_page(url)
-      recent_posts = document.css('#work').css('table.work-list').css('tr')
+      _get_spotlight_posts(document)
+    end
+  end
 
-      recent_posts.each do |post|
-        if post.css('.work-spotlight-status spotlight')
-          link = post.css('a')[1]
-          word_text = post.css('.text').css('div')[0].text
-          word_count = word_text.gsub(',', '').scan(/\d+/)[1]
-          if word_count.to_i < 2000
-            puts "#{word_count}: https://www.scribophile.com/#{link['href']}"
-            puts ""
-          end
+  def self.get_main_spotlight
+    url = "https://www.scribophile.com/writing/"
+    document = _parse_page(url)
+
+    recent_posts = document.css('table.work-list').css('tr')
+
+    recent_posts.each do |post|
+      if post.css('.work-spotlight-status spotlight')
+        link = post.css('a')[1]
+        title = post.css('.work-details').css('p').text
+        url = post.css('.work-details').css('a')[1]
+        word_text = post.css('.words').text
+        word_count = word_text.gsub(/\D/, '')
+        if word_count.to_i < 2000
+          puts "#{word_count}: #{title}, url: #{BASE_URL}/#{url['href']}"
+        end
+      end
+    end
+  end
+
+  def self._get_spotlight_posts(document)
+    recent_posts = document.css('#work').css('table.work-list').css('tr')
+
+    recent_posts.each do |post|
+      if post.css('.work-spotlight-status spotlight')
+        link = post.css('a')[1]
+        word_text = post.css('.text').css('div')[0].text
+        word_count = word_text.gsub(',', '').scan(/\d+/)[1]
+        if word_count.to_i < 2000
+          puts "#{word_count}: #{BASE_URL}#{link['href']}"
+          puts ""
         end
       end
     end
@@ -34,4 +58,4 @@ class Scraper
   end
 end
 
-Scraper.get_group_posts
+Scraper.get_main_spotlight
