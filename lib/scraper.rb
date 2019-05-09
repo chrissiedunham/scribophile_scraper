@@ -7,45 +7,56 @@ GROUPS = ['poetic-prose', 'lit-up-the-land-of-little-tales', 'spirit-walking', '
 BASE_URL = "https://www.scribophile.com"
 
 class Scraper
+  attr_accessor :short_posts, :chapter_posts
+
+  def initialize
+    @short_posts = {}
+    @chapter_posts = {}
+  end
+
   def self.get_spotlight_posts(kind)
     if kind == "group"
-      GROUPS.each do |group|
-        url = "#{BASE_URL}/groups/#{group}/"
-        _get_main_spotlight(url)
-      end
+      new._group_spotlight_posts
     else
-      url = "https://www.scribophile.com/writing/"
-      _get_main_spotlight(url)
+      new._main_spotlight_posts
     end
   end
 
-  def self.get_group_posts
+  def _group_spotlight_posts
+    GROUPS.each do |group|
+      url = "#{BASE_URL}/groups/#{group}/"
+      _get_spotlights(url, group=true)
+    end
   end
 
-  def self._get_main_spotlight(url)
+  def _main_spotlight_posts
+    url = "https://www.scribophile.com/writing/"
+    _get_spotlights(url)
+  end
+
+  def _get_spotlights(url, group=false)
     document = _parse_page(url)
 
     recent_posts = document.css('table.work-list').css('tr')
     puts ""
 
-    short_posts = {}
-    chapter_posts = {}
     recent_posts.each do |post|
       if post.css('.work-spotlight-status spotlight')
         title = post.css('.work-details').css('p').text
         url = post.css('.work-details').css('a')[0]
-        word_text = post.css('.words').text
+        word_text = group ? post.css('.text').text.split("•")[1] : post.css('.words').text
         word_count = word_text.gsub(/\D/, '')
+
         chapter = /chapter/.match?(title.downcase)
 
         if word_count.to_i < 2000
           if chapter
-            chapter_posts[url] = {
+            @chapter_posts[url] = {
               :word_count => word_count,
               :title => title,
             }
           else
-            short_posts[url] = {
+            @short_posts[url] = {
               :word_count => word_count,
               :title => title,
             }
@@ -69,7 +80,7 @@ class Scraper
     # end
   end
 
-  def self._parse_page(url)
+  def _parse_page(url)
     page = open(url, "Cookie" => COOKIE)
 
     document = Nokogiri::HTML(page)
