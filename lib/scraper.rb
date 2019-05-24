@@ -9,13 +9,14 @@ BASE_URL = "https://www.scribophile.com"
 class Scraper
   attr_accessor :short_posts, :chapter_posts
 
-  def initialize
+  def initialize(max_word_count)
+    @max_word_count = max_word_count
     @short_posts = {}
     @chapter_posts = {}
   end
 
-  def self.get_spotlight_posts(kind)
-    scraper = new
+  def self.get_spotlight_posts(kind, max_word_count=1000)
+    scraper = new(max_word_count)
     if kind == "group"
       scraper._group_spotlight_posts
       scraper._show_spotlights
@@ -51,7 +52,7 @@ class Scraper
 
         chapter = /chapter/.match?(title.downcase)
 
-        if word_count.to_i < 2000
+        if word_count.to_i < @max_word_count
           if chapter
             @chapter_posts[post_url] = {
               :word_count => word_count,
@@ -95,5 +96,8 @@ class Scraper
 end
 
 post_kind = ARGV[0]
+max_word_count = ARGV[1].to_i
 
-Scraper.get_spotlight_posts(post_kind)
+puts "Please specify [group|main] [max_words]" unless ARGV.length == 2
+
+Scraper.get_spotlight_posts(post_kind, max_word_count)
