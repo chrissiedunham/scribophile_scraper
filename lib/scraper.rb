@@ -1,3 +1,4 @@
+require 'pry-coolline'
 require 'rubygems'
 require 'open-uri'
 require 'nokogiri'
@@ -49,6 +50,8 @@ class Scraper
         post_url = post.css('.work-details').css('a')[0]
         word_text = group ? post.css('.text').text.split("•")[1] : post.css('.words').text
         word_count = word_text.gsub(/\D/, '')
+        is_mine = !post.css('a')[0]['href'].match(/dunham/).nil?
+        next if is_mine
 
         chapter = /chapter/.match?(title.downcase)
 
