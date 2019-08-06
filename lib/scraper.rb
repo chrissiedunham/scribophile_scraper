@@ -6,6 +6,7 @@ require 'nokogiri'
 COOKIE = " _ga=GA1.2.1848185124.1556738287; scribophilesessionid=5690db739727ec5cd05d6ddccca52180; __stripe_mid=51934a52-dfdc-4c32-a148-7f887afc1f7d; _gid=GA1.2.1385238478.1557167469"
 GROUPS = ['poetic-prose', 'lit-up-the-land-of-little-tales', 'spirit-walking', 'spiritual-memoir-awareness-transcendence-non-duality', 'the-memoir-writers-hearth']
 BASE_URL = "https://www.scribophile.com"
+MY_URI = "authors/chrissie-dunham/"
 
 class Scraper
   attr_accessor :short_posts, :chapter_posts
@@ -20,17 +21,34 @@ class Scraper
     scraper = new(max_word_count)
     if kind == "group"
       scraper._group_spotlight_posts
-      scraper._show_spotlights
+    elsif kind == "favs"
+      scraper._group_spotlight_posts
     else
       scraper._main_spotlight_posts
-      scraper._show_spotlights
     end
+    scraper._show_spotlights
   end
 
   def _group_spotlight_posts
     GROUPS.each do |group|
       url = "#{BASE_URL}/groups/#{group}/"
       _get_spotlights(url, group)
+    end
+  end
+
+  def _favorite_urls
+    document = _parse_page("#{BASE_URL}/#{MY_URI}")
+    favorites  = document.css('section#favorites').css('li')
+    favorites.map do |fav|
+      fav.css('a')[0]['href']
+    end
+  end
+
+  def _group_spotlight_posts
+    _favorite_urls.each do |fav_url|
+      url = "#{BASE_URL}/#{fav_url}"
+
+      _get_spotlights(url)
     end
   end
 
@@ -101,6 +119,6 @@ end
 post_kind = ARGV[0]
 max_word_count = ARGV[1].to_i
 
-puts "Please specify [group|main] [max_words]" unless ARGV.length == 2
+puts "Please specify [group|main|favs] [max_words]" unless ARGV.length == 2
 
 Scraper.get_spotlight_posts(post_kind, max_word_count)
