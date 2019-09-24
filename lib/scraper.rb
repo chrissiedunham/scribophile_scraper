@@ -1,10 +1,9 @@
-require 'pry-coolline'
 require 'rubygems'
 require 'open-uri'
 require 'nokogiri'
 
 COOKIE = " _ga=GA1.2.1848185124.1556738287; scribophilesessionid=5690db739727ec5cd05d6ddccca52180; __stripe_mid=51934a52-dfdc-4c32-a148-7f887afc1f7d; _gid=GA1.2.1385238478.1557167469"
-GROUPS = ['poetic-prose', 'lit-up-the-land-of-little-tales', 'spirit-walking', 'spiritual-memoir-awareness-transcendence-non-duality', 'the-memoir-writers-hearth']
+GROUPS = ['poetic-prose', 'lit-up-the-land-of-little-tales', 'spirit-walking', 'spiritual-memoir-awareness-transcendence-non-duality', 'the-memoir-writers-hearth', 'lets-get-real']
 BASE_URL = "https://www.scribophile.com"
 MY_URI = "authors/chrissie-dunham/"
 
@@ -71,7 +70,7 @@ class Scraper
         is_mine = !post.css('a')[0]['href'].match(/dunham/).nil?
         next if is_mine
 
-        chapter = /chapter/.match?(title.downcase)
+        chapter = (/chapter/ =~ (title.downcase))
 
         if word_count.to_i < @max_word_count
           if chapter
